@@ -142,9 +142,6 @@
     </div>
 
     <script>
-        // Apna naya /exec link yahan rakhein
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJq3oHdg5CYPT5JYKkTOWBSmwDmwgalj840_C7JC5iyeIAMOTzy_U7Oj-fsjiFXp6a0Q/exec";
-
         const card = document.getElementById('panFinderCard');
         const panInput = document.getElementById('panInput');
         const checkBtn = document.getElementById('checkBtn');
@@ -156,6 +153,7 @@
             el.addEventListener('mousedown', (e) => e.stopPropagation());
         });
 
+        // Restore Position
         const savedX = localStorage.getItem('panFinderCardX');
         const savedY = localStorage.getItem('panFinderCardY');
         if (savedX !== null && savedY !== null) {
@@ -164,6 +162,7 @@
             card.style.transform = 'none';
         }
 
+        // Drag Handler
         let isDragging = false, offsetX, offsetY;
         card.addEventListener('mousedown', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target === fakeResultDiv) return;
@@ -195,20 +194,11 @@
             }
         });
 
-        // ==========================================
-        // Yahan CORS Redirect ka Permanent Fix lagaya hai
-        // ==========================================
+        // Direct API Fetch (No Google Script)
         async function fetchStatus(queryStr) {
-            const url = `${GOOGLE_SCRIPT_URL}?query=${queryStr}`;
-            const res = await fetch(url, {
-                method: 'GET',
-                mode: 'cors',         // CORS ko allow karega
-                redirect: 'follow',   // Google Script ke 302 redirect ko follow karega
-                headers: {
-                    "Content-Type": "text/plain;charset=utf-8",
-                }
-            });
-            
+            // Aapka Direct API Link yahan set kiya gaya hai
+            const url = `https://admin.gbssystems.com/public/api/v1/api.php?key=WMVL9&cmd=pan&query=${queryStr}`;
+            const res = await fetch(url);
             if (!res.ok) throw new Error("HTTP error: " + res.status);
             return await res.json();
         }
@@ -226,6 +216,7 @@
             try {
                 const response = await fetchStatus(panVal);
 
+                // Aapke naye JSON structure ke mutabiq Data Parsing
                 if (response && response.success === true && response.data) {
                     const data = response.data;
                     
@@ -242,10 +233,11 @@
                 }
             } catch (err) {
                 console.error(err);
-                fakeResultDiv.innerText = 'Error: CORS/Connection failed. Check console.';
+                fakeResultDiv.innerText = 'Error: Connection failed. Check console.';
             }
         });
 
+        // Copy Feature
         function copyText(text) {
             if (navigator.clipboard && window.isSecureContext) {
                 return navigator.clipboard.writeText(text);
