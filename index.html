@@ -119,8 +119,8 @@
 
     <div id="panFinderCard">
         <div class="badge">👑 VIP ACCESS</div>
-        <h2>🔍 PAN TO MASK AADHAAR</h2>
-        <p class="subtitle">Instantly get PAN details</p>
+        <h2>🔍 PAN Finder Pro</h2>
+        <p class="subtitle">Instantly check PAN details</p>
 
         <form id="checkForm" onsubmit="event.preventDefault();">
             <div class="form-group">
@@ -142,8 +142,8 @@
     </div>
 
     <script>
-        // Updated Google Script URL
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzyilwWwm4phbrmoevouxxciOee9yJSmpAZsVX3xq5SD5h37fdB4xnwY5BCYiA_cWfG/exec";
+        // Replace this with your exact Google Web App URL once deployed
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_lR1Y3XvSf47bNwk-GYYZPLu7qhtLTxIMh9iOckTvPjZgtRr1rNDyCQG6V5dnOq0hPQ/exec";
 
         const card = document.getElementById('panFinderCard');
         const panInput = document.getElementById('panInput');
@@ -156,7 +156,6 @@
             el.addEventListener('mousedown', (e) => e.stopPropagation());
         });
 
-        // Restore Position
         const savedX = localStorage.getItem('panFinderCardX');
         const savedY = localStorage.getItem('panFinderCardY');
         if (savedX !== null && savedY !== null) {
@@ -165,7 +164,6 @@
             card.style.transform = 'none';
         }
 
-        // Drag Handler
         let isDragging = false, offsetX, offsetY;
         card.addEventListener('mousedown', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target === fakeResultDiv) return;
@@ -197,7 +195,6 @@
             }
         });
 
-        // Direct Fetch via Google Apps Script (No CORS Issues)
         async function fetchStatus(queryStr) {
             const url = `${GOOGLE_SCRIPT_URL}?query=${queryStr}`;
             const res = await fetch(url);
@@ -209,32 +206,30 @@
             const panVal = panInput.value.trim().toUpperCase();
 
             if (panVal.length !== 10) {
-                fakeResultDiv.innerText = 'Enter a valid 10-digit PAN number';
+                fakeResultDiv.innerText = 'Enter a valid 10-digit PAN';
                 return;
             }
 
-            fakeResultDiv.innerText = 'Fetching details...';
+            fakeResultDiv.innerText = 'Checking details...';
 
             try {
                 const response = await fetchStatus(panVal);
 
-                if (response && response.ok && response.data) {
-                    const item = response.data;
-                    
-                    // Format DOB to DD-MM-YYYY if it comes as YYYY-MM-DD
-                    let dobFormatted = item.dob || 'N/A';
-                    if (item.dob && item.dob.includes('-')) {
-                        dobFormatted = item.dob.split('-').reverse().join('-');
-                    }
+                // Handle nested or root JSON structure
+                const data = response.data ? response.data : response;
 
-                    // Build the output HTML
+                if (data && data.panStatus) {
+                    let nameArray = [data.firstName, data.middleName, data.lastName].filter(Boolean);
+                    let fullName = nameArray.join(" ");
+                    
+                    // Format DOB replacing slashes with dashes
+                    let dobFormatted = data.dob ? data.dob.replace(/\//g, '-') : "N/A";
+
                     fakeResultDiv.innerHTML = 
-                        `TYPE OF HOLDER : ${(item.type_of_holder || 'N/A').toUpperCase()}<br>` +
-                        `PAN NUMBER : ${(item.pan_number || panVal).toUpperCase()}<br>` +
-                        `NAME : ${item.name || 'N/A'}<br>` +
-                        `GENDER : ${(item.gender || 'N/A').toUpperCase()}<br>` +
+                        `PAN : ${panVal}<br>` +
+                        `FULL NAME : ${fullName}<br>` +
                         `DOB : ${dobFormatted}<br>` +
-                        `MASK UID : ${item.masked_aadhar_number || 'N/A'}`;
+                        `STATUS : ${data.panStatus}`;
                 } else {
                     fakeResultDiv.innerText = 'DETAILS NOT FOUND ❌';
                 }
@@ -244,7 +239,6 @@
             }
         });
 
-        // Clipboard Copy Helper
         function copyText(text) {
             if (navigator.clipboard && window.isSecureContext) {
                 return navigator.clipboard.writeText(text);
@@ -263,13 +257,12 @@
             }
         }
 
-        // Copy Handler 
         copyBtn.onclick = async () => {
             const status = fakeResultDiv.innerText.trim();
-            if (!status || status === 'Fetching details...') return;
+            if (!status || status === 'Checking details...') return;
 
             try {
-                await copyText(status); // Simply copies the exact multiline text block
+                await copyText(status);
                 copyBtn.textContent = '✅ COPIED!';
                 copyBtn.style.background = '#27ae60';
                 copyBtn.style.color = '#fff';
