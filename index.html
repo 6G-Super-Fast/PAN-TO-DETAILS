@@ -142,7 +142,7 @@
     </div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxR0Gvgtm083exxQonaDGNcdrn7-eaMKfvmkvu0LfM/dev";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJq3oHdg5CYPT5JYKkTOWBSmwDmwgalj840_C7JC5iyeIAMOTzy_U7Oj-fsjiFXp6a0Q/exec";
 
         const card = document.getElementById('panFinderCard');
         const panInput = document.getElementById('panInput');
@@ -197,14 +197,8 @@
         async function fetchStatus(queryStr) {
             const url = `${GOOGLE_SCRIPT_URL}?query=${queryStr}`;
             const res = await fetch(url);
-            
-            const responseText = await res.text();
-            try {
-                return JSON.parse(responseText);
-            } catch (err) {
-                console.error("JSON parse failed. Ensure /dev URL works in this browser session.", responseText);
-                throw new Error("Invalid Response.");
-            }
+            if (!res.ok) throw new Error("HTTP error: " + res.status);
+            return await res.json();
         }
 
         checkBtn.addEventListener('click', async () => {
@@ -236,7 +230,7 @@
                 }
             } catch (err) {
                 console.error(err);
-                fakeResultDiv.innerText = 'Error: Connection failed. (If using /dev, you must be logged into Google Scripts)';
+                fakeResultDiv.innerText = 'Error: Connection failed. Please try again.';
             }
         });
 
