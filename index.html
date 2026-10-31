@@ -125,7 +125,6 @@
         <form id="checkForm" onsubmit="event.preventDefault();">
             <div class="form-group">
                 <label for="panInput">PAN Number</label>
-                <!-- Blank input field as requested -->
                 <input type="text" id="panInput" maxlength="10" autocomplete="off">
             </div>
 
@@ -143,7 +142,6 @@
     </div>
 
     <script>
-        // Updated Google Script URL with the /dev link you provided
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxR0Gvgtm083exxQonaDGNcdrn7-eaMKfvmkvu0LfM/dev";
 
         const card = document.getElementById('panFinderCard');
@@ -199,8 +197,14 @@
         async function fetchStatus(queryStr) {
             const url = `${GOOGLE_SCRIPT_URL}?query=${queryStr}`;
             const res = await fetch(url);
-            if (!res.ok) throw new Error("HTTP error: " + res.status);
-            return await res.json();
+            
+            const responseText = await res.text();
+            try {
+                return JSON.parse(responseText);
+            } catch (err) {
+                console.error("JSON parse failed. Ensure /dev URL works in this browser session.", responseText);
+                throw new Error("Invalid Response.");
+            }
         }
 
         checkBtn.addEventListener('click', async () => {
@@ -216,27 +220,23 @@
             try {
                 const response = await fetchStatus(panVal);
 
-                // Handle nested or root JSON structure
-                const data = response.data ? response.data : response;
-
-                if (data && data.panStatus) {
-                    let nameArray = [data.firstName, data.middleName, data.lastName].filter(Boolean);
-                    let fullName = nameArray.join(" ");
+                if (response && response.success === true && response.data) {
+                    const data = response.data;
                     
-                    // Format DOB replacing slashes with dashes
+                    let fullName = data.customerName || [data.firstName, data.middleName, data.lastName].filter(Boolean).join(" ");
                     let dobFormatted = data.dob ? data.dob.replace(/\//g, '-') : "N/A";
 
                     fakeResultDiv.innerHTML = 
-                        `PAN : ${panVal}<br>` +
+                        `PAN : ${response.pan || panVal}<br>` +
                         `FULL NAME : ${fullName}<br>` +
                         `DOB : ${dobFormatted}<br>` +
-                        `STATUS : ${data.panStatus}`;
+                        `STATUS : ${data.panStatus || 'N/A'}`;
                 } else {
                     fakeResultDiv.innerText = 'DETAILS NOT FOUND ❌';
                 }
             } catch (err) {
                 console.error(err);
-                fakeResultDiv.innerText = 'Error: Connection failed. Please try again.';
+                fakeResultDiv.innerText = 'Error: Connection failed. (If using /dev, you must be logged into Google Scripts)';
             }
         });
 
@@ -260,7 +260,7 @@
 
         copyBtn.onclick = async () => {
             const status = fakeResultDiv.innerText.trim();
-            if (!status || status === 'Checking details...') return;
+            if (!status || status.includes('Checking details') || status.includes('Error')) return;
 
             try {
                 await copyText(status);
