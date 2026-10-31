@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAN Finder Pro</title>
+    <title>PAN TO DETAILS</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; user-select: none; }
@@ -125,6 +125,7 @@
         <form id="checkForm" onsubmit="event.preventDefault();">
             <div class="form-group">
                 <label for="panInput">PAN Number</label>
+                <!-- Blank input field as requested -->
                 <input type="text" id="panInput" maxlength="10" autocomplete="off">
             </div>
 
@@ -142,8 +143,8 @@
     </div>
 
     <script>
-        // Sahi aur updated Google Script URL lagaya gaya hai
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzyilwWwm4phbrmoevouxxciOee9yJSmpAZsVX3xq5SD5h37fdB4xnwY5BCYiA_cWfG/exec";
+        // Updated Google Script URL with the /dev link you provided
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxR0Gvgtm083exxQonaDGNcdrn7-eaMKfvmkvu0LfM/dev";
 
         const card = document.getElementById('panFinderCard');
         const panInput = document.getElementById('panInput');
@@ -215,14 +216,14 @@
             try {
                 const response = await fetchStatus(panVal);
 
-                // JSON Format ke hisaab se data nikalna
+                // Handle nested or root JSON structure
                 const data = response.data ? response.data : response;
 
                 if (data && data.panStatus) {
                     let nameArray = [data.firstName, data.middleName, data.lastName].filter(Boolean);
                     let fullName = nameArray.join(" ");
                     
-                    // DOB format (slashes ko dashes me convert karna)
+                    // Format DOB replacing slashes with dashes
                     let dobFormatted = data.dob ? data.dob.replace(/\//g, '-') : "N/A";
 
                     fakeResultDiv.innerHTML = 
