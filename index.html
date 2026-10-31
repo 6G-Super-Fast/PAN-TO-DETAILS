@@ -142,6 +142,7 @@
     </div>
 
     <script>
+        // Apna naya /exec link yahan rakhein
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJq3oHdg5CYPT5JYKkTOWBSmwDmwgalj840_C7JC5iyeIAMOTzy_U7Oj-fsjiFXp6a0Q/exec";
 
         const card = document.getElementById('panFinderCard');
@@ -194,9 +195,20 @@
             }
         });
 
+        // ==========================================
+        // Yahan CORS Redirect ka Permanent Fix lagaya hai
+        // ==========================================
         async function fetchStatus(queryStr) {
             const url = `${GOOGLE_SCRIPT_URL}?query=${queryStr}`;
-            const res = await fetch(url);
+            const res = await fetch(url, {
+                method: 'GET',
+                mode: 'cors',         // CORS ko allow karega
+                redirect: 'follow',   // Google Script ke 302 redirect ko follow karega
+                headers: {
+                    "Content-Type": "text/plain;charset=utf-8",
+                }
+            });
+            
             if (!res.ok) throw new Error("HTTP error: " + res.status);
             return await res.json();
         }
@@ -230,7 +242,7 @@
                 }
             } catch (err) {
                 console.error(err);
-                fakeResultDiv.innerText = 'Error: Connection failed. Please try again.';
+                fakeResultDiv.innerText = 'Error: CORS/Connection failed. Check console.';
             }
         });
 
